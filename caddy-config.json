@@ -1,0 +1,80 @@
+{
+  "apps": {
+    "http": {
+      "servers": {
+        "srv0": {
+          "listen": [":${PORT}"],
+          "routes": [
+            {
+              "match": [{"path": ["/invocations*"]}],
+              "handle": [
+                {
+                  "handler": "subroute",
+                  "routes": [
+                    {
+                      "handle": [
+                        {
+                          "handler": "rewrite",
+                          "uri": "/molecular-docking/diffdock/generate{uri}"
+                        },
+                        {
+                          "handler": "reverse_proxy",
+                          "upstreams": [{"dial": "127.0.0.1:${BACKEND_PORT}"}],
+                          "flush_interval": -1
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "match": [{"path": ["/ping*"]}],
+              "handle": [
+                {
+                  "handler": "subroute",
+                  "routes": [
+                    {
+                      "handle": [
+                        {
+                          "handler": "rewrite",
+                          "uri": "/v1/health/ready{uri}"
+                        },
+                        {
+                          "handler": "reverse_proxy",
+                          "upstreams": [{"dial": "127.0.0.1:${BACKEND_PORT}"}]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "match": [{"path": ["/models*"]}],
+              "handle": [
+                {
+                  "handler": "subroute",
+                  "routes": [
+                    {
+                      "handle": [
+                        {
+                          "handler": "rewrite",
+                          "uri": "/v1/models{uri}"
+                        },
+                        {
+                          "handler": "reverse_proxy",
+                          "upstreams": [{"dial": "127.0.0.1:${BACKEND_PORT}"}]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      }
+    }
+  }
+}
